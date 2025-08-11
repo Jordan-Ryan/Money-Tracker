@@ -11,7 +11,7 @@ import AddDebtModal from './modals/AddDebtModal';
 import AddExpenseModal from './modals/AddExpenseModal';
 
 // Services
-import { formatCurrency, exportExcel, importExcel } from '../services/financeService';
+import { formatGBP, exportExcel, importExcel, updateInvestmentPrices } from '../services/financeService';
 
 const Dashboard = ({ data, onDataUpdate }) => {
   const [showBankModal, setShowBankModal] = useState(false);
@@ -19,6 +19,7 @@ const Dashboard = ({ data, onDataUpdate }) => {
   const [showDebtModal, setShowDebtModal] = useState(false);
   const [showExpenseModal, setShowExpenseModal] = useState(false);
   const [importing, setImporting] = useState(false);
+  const [updatingPrices, setUpdatingPrices] = useState(false);
 
   const COLORS = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#06b6d4'];
 
@@ -55,6 +56,19 @@ const Dashboard = ({ data, onDataUpdate }) => {
       toast.error('Failed to import data');
     } finally {
       setImporting(false);
+    }
+  };
+
+  const handleUpdatePrices = async () => {
+    try {
+      setUpdatingPrices(true);
+      await updateInvestmentPrices();
+      toast.success('Investment prices updated successfully!');
+      onDataUpdate();
+    } catch (error) {
+      toast.error('Failed to update investment prices');
+    } finally {
+      setUpdatingPrices(false);
     }
   };
 
@@ -127,25 +141,25 @@ const Dashboard = ({ data, onDataUpdate }) => {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         <StatCard
           title="Total Assets"
-          value={formatCurrency(data?.totalAssets || 0)}
+          value={formatGBP(data?.totalAssets || 0)}
           icon={FiDollarSign}
           color="blue"
         />
         <StatCard
           title="Net Worth"
-          value={formatCurrency(data?.netWorth || 0)}
+          value={formatGBP(data?.netWorth || 0)}
           icon={FiTrendingUp}
           color="success"
         />
         <StatCard
           title="Monthly Expenses"
-          value={formatCurrency(data?.monthlyExpenses || 0)}
+          value={formatGBP(data?.monthlyExpenses || 0)}
           icon={FiCreditCard}
           color="warning"
         />
         <StatCard
           title="Total Liabilities"
-          value={formatCurrency(data?.totalLiabilities || 0)}
+          value={formatGBP(data?.totalLiabilities || 0)}
           icon={FiPieChart}
           color="danger"
         />
@@ -173,7 +187,7 @@ const Dashboard = ({ data, onDataUpdate }) => {
                     <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                   ))}
                 </Pie>
-                <Tooltip formatter={(value) => formatCurrency(value)} />
+                <Tooltip formatter={(value) => formatGBP(value)} />
               </PieChart>
             </ResponsiveContainer>
           </div>
@@ -199,7 +213,7 @@ const Dashboard = ({ data, onDataUpdate }) => {
                     <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                   ))}
                 </Pie>
-                <Tooltip formatter={(value) => formatCurrency(value)} />
+                <Tooltip formatter={(value) => formatGBP(value)} />
               </PieChart>
             </ResponsiveContainer>
           </div>
@@ -235,6 +249,15 @@ const Dashboard = ({ data, onDataUpdate }) => {
             color="danger"
           />
         </div>
+        <div className="mt-4">
+          <button
+            onClick={handleUpdatePrices}
+            className="btn btn-secondary"
+            disabled={updatingPrices}
+          >
+            {updatingPrices ? 'Updating...' : 'Update Investment Prices'}
+          </button>
+        </div>
       </div>
 
       {/* Recent Activity */}
@@ -250,7 +273,7 @@ const Dashboard = ({ data, onDataUpdate }) => {
                   <p className="text-sm text-gray-600">{bank.bankName}</p>
                 </div>
               </div>
-              <span className="font-semibold">{formatCurrency(bank.balance)}</span>
+              <span className="font-semibold">{formatGBP(bank.balance)}</span>
             </div>
           ))}
           {data?.investments?.slice(0, 3).map((investment) => (
@@ -262,7 +285,7 @@ const Dashboard = ({ data, onDataUpdate }) => {
                   <p className="text-sm text-gray-600">{investment.shares} shares</p>
                 </div>
               </div>
-              <span className="font-semibold">{formatCurrency(investment.currentValue)}</span>
+              <span className="font-semibold">{formatGBP(investment.currentValue)}</span>
             </div>
           ))}
         </div>

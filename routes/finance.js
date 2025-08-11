@@ -3,6 +3,7 @@ const router = express.Router();
 const multer = require('multer');
 const xlsx = require('xlsx');
 const moment = require('moment');
+const axios = require('axios'); // Added axios for live data
 
 // In-memory storage (replace with database in production)
 let financeData = {
@@ -361,6 +362,66 @@ router.get('/export-excel', (req, res) => {
     res.send(buffer);
   } catch (error) {
     res.status(500).json({ error: error.message });
+  }
+});
+
+// Update investment prices with live data and convert to GBP
+router.post('/update-investment-prices', async (req, res) => {
+  try {
+    if (financeData.investments.length === 0) {
+      return res.json({ message: 'No investments to update', updatedCount: 0 });
+    }
+
+    const symbols = financeData.investments.map(inv => inv.symbol).filter(Boolean);
+    if (symbols.length === 0) {
+      return res.json({ message: 'No valid investment symbols found', updatedCount: 0 });
+    }
+
+    // Get USD to GBP exchange rate
+    let usdToGbp = 0.79; // Default fallback rate
+    try {
+      const exchangeResponse = await axios.get('https://api.exchangerate-api.com/v4/latest/USD');
+      usdToGbp = exchangeResponse.data.rates.GBP || 0.79;
+    } catch (exchangeError) {
+      console.warn('Using fallback exchange rate:', usdToGbp);
+    }
+
+    let updatedCount = 0;
+    for (const investment of financeData.investments) {
+      if (investment.symbol) {
+        try {
+          const response = await axios.get(`https://query1.finance.yahoo.com/v8/finance/chart/${investment.symbol}`);
+          if (response.data && response.data.chart && response.data.chart.result) {
+            const result = response.data.chart.result[0];
+            const meta = result.meta;
+            const currentPriceUSD = meta.regularMarketPrice;
+            const currentPriceGBP = currentPriceUSD * usdToGbp;
+            
+            investment.currentPrice = currentPriceGBP;
+            investment.currentPriceUSD = currentPriceUSD;
+            investment.lastUpdated = new Date().toISOString();
+            investment.usdToGbp = usdToGbp;
+            
+            updatedCount++;
+          }
+          
+          // Small delay to avoid rate limiting
+          await new Promise(resolve => setTimeout(resolve, 100));
+        } catch (error) {
+          console.warn(`Failed to update ${investment.symbol}:`, error.message);
+        }
+      }
+    }
+
+    res.json({ 
+      message: `Updated ${updatedCount} investments`, 
+      updatedCount,
+      usdToGbp,
+      timestamp: new Date().toISOString()
+    });
+  } catch (error) {
+    console.error('Error updating investment prices:', error.message);
+    res.status(500).json({ error: 'Failed to update investment prices' });
   }
 });
 

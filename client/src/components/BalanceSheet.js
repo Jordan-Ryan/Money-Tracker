@@ -4,7 +4,7 @@ import { FiPlus, FiEdit2, FiTrash2, FiTrendingUp, FiTrendingDown } from 'react-i
 import toast from 'react-hot-toast';
 
 // Services
-import { getBalanceSheet, deleteBank, deleteInvestment, deleteDebt } from '../services/financeService';
+import { getBalanceSheet, deleteBank, deleteInvestment, deleteDebt, formatGBP, updateInvestmentPrices } from '../services/financeService';
 
 // Modals
 import AddBankModal from './modals/AddBankModal';
@@ -20,6 +20,9 @@ const BalanceSheet = ({ onDataUpdate }) => {
     debt: false
   });
   const [editData, setEditData] = useState(null);
+  const [showDebtModal, setShowDebtModal] = useState(false);
+  const [editingDebt, setEditingDebt] = useState(null);
+  const [updatingPrices, setUpdatingPrices] = useState(false);
 
   useEffect(() => {
     loadBalanceSheet();
@@ -74,6 +77,20 @@ const BalanceSheet = ({ onDataUpdate }) => {
       handleSuccess();
     } catch (error) {
       toast.error('Failed to delete item');
+    }
+  };
+
+  const handleUpdatePrices = async () => {
+    try {
+      setUpdatingPrices(true);
+      const result = await updateInvestmentPrices();
+      toast.success(result.message);
+      loadBalanceSheet(); // Refresh the data
+    } catch (error) {
+      toast.error('Failed to update investment prices');
+      console.error('Error updating prices:', error);
+    } finally {
+      setUpdatingPrices(false);
     }
   };
 
@@ -139,7 +156,7 @@ const BalanceSheet = ({ onDataUpdate }) => {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-green-100">Total Assets</p>
-              <p className="text-2xl font-bold">${assets.total.toLocaleString()}</p>
+              <p className="text-2xl font-bold">{formatGBP(assets.total)}</p>
             </div>
             <FiTrendingUp className="text-2xl" />
           </div>
@@ -154,7 +171,7 @@ const BalanceSheet = ({ onDataUpdate }) => {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-red-100">Total Liabilities</p>
-              <p className="text-2xl font-bold">${liabilities.total.toLocaleString()}</p>
+              <p className="text-2xl font-bold">{formatGBP(liabilities.total)}</p>
             </div>
             <FiTrendingDown className="text-2xl" />
           </div>
@@ -173,7 +190,7 @@ const BalanceSheet = ({ onDataUpdate }) => {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-blue-100">Net Worth</p>
-              <p className="text-2xl font-bold">${netWorth.toLocaleString()}</p>
+              <p className="text-2xl font-bold">{formatGBP(netWorth)}</p>
             </div>
             {netWorth >= 0 ? (
               <FiTrendingUp className="text-2xl" />
@@ -194,7 +211,7 @@ const BalanceSheet = ({ onDataUpdate }) => {
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-xl font-semibold text-gray-900">Assets</h2>
           <span className="text-2xl font-bold text-green-600">
-            ${assets.total.toLocaleString()}
+            {formatGBP(assets.total)}
           </span>
         </div>
 
@@ -210,7 +227,7 @@ const BalanceSheet = ({ onDataUpdate }) => {
                 </div>
                 <div className="flex items-center gap-2">
                   <span className="text-lg font-semibold text-green-600">
-                    ${bank.balance.toLocaleString()}
+                    {formatGBP(bank.balance)}
                   </span>
                   <button
                     onClick={() => handleModalOpen('bank', bank)}
@@ -235,19 +252,36 @@ const BalanceSheet = ({ onDataUpdate }) => {
 
         {/* Investments */}
         <div>
-          <h3 className="text-lg font-medium text-gray-700 mb-3">Investments</h3>
+          <div className="flex justify-between items-center mb-4">
+            <h3 className="text-xl font-semibold">Investments</h3>
+            <div className="flex gap-2">
+              <button
+                onClick={handleUpdatePrices}
+                className="btn btn-secondary"
+                disabled={updatingPrices}
+              >
+                {updatingPrices ? 'Updating...' : 'Update Prices'}
+              </button>
+                                            <button
+                onClick={() => handleModalOpen('investment')}
+                className="btn btn-primary"
+              >
+                Add Investment
+              </button>
+            </div>
+          </div>
           <div className="space-y-3">
             {assets.investments.map(investment => (
               <div key={investment.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
                 <div>
                   <p className="font-medium text-gray-900">{investment.symbol}</p>
                   <p className="text-sm text-gray-600">
-                    {investment.shares} shares @ ${investment.purchasePrice}
+                    {investment.shares} shares @ {formatGBP(investment.purchasePrice)}
                   </p>
                 </div>
                 <div className="flex items-center gap-2">
                   <span className="text-lg font-semibold text-green-600">
-                    ${investment.currentValue.toLocaleString()}
+                    {formatGBP(investment.currentValue)}
                   </span>
                   <button
                     onClick={() => handleModalOpen('investment', investment)}
@@ -281,7 +315,7 @@ const BalanceSheet = ({ onDataUpdate }) => {
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-xl font-semibold text-gray-900">Liabilities</h2>
           <span className="text-2xl font-bold text-red-600">
-            ${liabilities.total.toLocaleString()}
+            {formatGBP(liabilities.total)}
           </span>
         </div>
 
@@ -295,9 +329,9 @@ const BalanceSheet = ({ onDataUpdate }) => {
                 </p>
               </div>
               <div className="flex items-center gap-2">
-                <span className="text-lg font-semibold text-red-600">
-                  ${debt.amount.toLocaleString()}
-                </span>
+                                  <span className="text-lg font-semibold text-red-600">
+                    {formatGBP(debt.amount)}
+                  </span>
                 <button
                   onClick={() => handleModalOpen('debt', debt)}
                   className="p-1 text-gray-400 hover:text-gray-600"

@@ -6,7 +6,7 @@ import toast from 'react-hot-toast';
 import moment from 'moment';
 
 // Services
-import { getCashFlow, addExpense, updateExpense, deleteExpense } from '../services/financeService';
+import { getCashFlow, addExpense, updateExpense, deleteExpense, formatGBP } from '../services/financeService';
 
 // Modals
 import AddExpenseModal from './modals/AddExpenseModal';
@@ -154,7 +154,7 @@ const CashFlow = ({ onDataUpdate }) => {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-green-100">Monthly Income</p>
-              <p className="text-2xl font-bold">${currentMonth.income.toLocaleString()}</p>
+              <p className="text-2xl font-bold">{formatGBP(currentMonth.income)}</p>
             </div>
             <FiTrendingUp className="text-2xl" />
           </div>
@@ -169,7 +169,7 @@ const CashFlow = ({ onDataUpdate }) => {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-red-100">Monthly Expenses</p>
-              <p className="text-2xl font-bold">${currentMonth.expenses.toLocaleString()}</p>
+              <p className="text-2xl font-bold">{formatGBP(currentMonth.expenses)}</p>
             </div>
             <FiTrendingDown className="text-2xl" />
           </div>
@@ -188,7 +188,7 @@ const CashFlow = ({ onDataUpdate }) => {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-blue-100">Net Cash Flow</p>
-              <p className="text-2xl font-bold">${currentMonth.netCashFlow.toLocaleString()}</p>
+              <p className="text-2xl font-bold">{formatGBP(currentMonth.netCashFlow)}</p>
             </div>
             {currentMonth.netCashFlow >= 0 ? (
               <FiTrendingUp className="text-2xl" />
@@ -240,7 +240,7 @@ const CashFlow = ({ onDataUpdate }) => {
                   <CartesianGrid strokeDasharray="3 3" />
                   <XAxis dataKey="category" />
                   <YAxis />
-                  <Tooltip formatter={(value) => `$${value.toLocaleString()}`} />
+                  <Tooltip formatter={(value) => formatGBP(value)} />
                   <Bar dataKey="amount" fill="#3B82F6" />
                 </BarChart>
               </ResponsiveContainer>
@@ -271,7 +271,7 @@ const CashFlow = ({ onDataUpdate }) => {
                     <span className={`font-semibold ${
                       expense.type === 'income' ? 'text-green-600' : 'text-red-600'
                     }`}>
-                      {expense.type === 'income' ? '+' : '-'}${expense.amount.toLocaleString()}
+                      {expense.type === 'income' ? '+' : '-'}{formatGBP(expense.amount)}
                     </span>
                     <button
                       onClick={() => handleModalOpen('expense', expense)}
@@ -311,7 +311,7 @@ const CashFlow = ({ onDataUpdate }) => {
                 <CartesianGrid strokeDasharray="3 3" />
                 <XAxis dataKey="month" />
                 <YAxis />
-                <Tooltip formatter={(value) => `$${value.toLocaleString()}`} />
+                <Tooltip formatter={(value) => formatGBP(value)} />
                 <Line 
                   type="monotone" 
                   dataKey="projectedBalance" 
@@ -327,17 +327,17 @@ const CashFlow = ({ onDataUpdate }) => {
             <div>
               <h4 className="font-medium text-gray-700 mb-2">Projection Assumptions</h4>
               <div className="space-y-2 text-sm text-gray-600">
-                <p>• Average Monthly Income: ${currentMonth.income.toLocaleString()}</p>
-                <p>• Average Monthly Expenses: ${(monthlyExpenses.reduce((sum, exp) => sum + exp.amount, 0) / Math.max(monthlyExpenses.length, 1)).toLocaleString()}</p>
-                <p>• Starting Balance: ${currentMonth.endingBalance.toLocaleString()}</p>
+                <p>• Average Monthly Income: {formatGBP(currentMonth.income)}</p>
+                <p>• Average Monthly Expenses: {formatGBP(monthlyExpenses.reduce((sum, exp) => sum + exp.amount, 0) / Math.max(monthlyExpenses.length, 1))}</p>
+                <p>• Starting Balance: {formatGBP(currentMonth.endingBalance)}</p>
               </div>
             </div>
             <div>
               <h4 className="font-medium text-gray-700 mb-2">Key Insights</h4>
               <div className="space-y-2 text-sm text-gray-600">
                 <p>• {projections[projections.length - 1]?.projectedBalance >= 0 ? 'Positive' : 'Negative'} trend projected</p>
-                <p>• Year-end balance: ${projections[projections.length - 1]?.projectedBalance.toLocaleString()}</p>
-                <p>• Monthly change: ${(projections[0]?.projectedBalance - currentMonth.endingBalance).toLocaleString()}</p>
+                <p>• Year-end balance: {formatGBP(projections[projections.length - 1]?.projectedBalance)}</p>
+                <p>• Monthly change: {formatGBP(projections[0]?.projectedBalance - currentMonth.endingBalance)}</p>
               </div>
             </div>
           </div>

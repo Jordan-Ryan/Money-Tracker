@@ -208,6 +208,17 @@ export const exportExcel = async () => {
   }
 };
 
+// Update investment prices with live data
+export const updateInvestmentPrices = async () => {
+  try {
+    const response = await api.post('/update-investment-prices');
+    return response.data;
+  } catch (error) {
+    console.error('Error updating investment prices:', error);
+    throw error;
+  }
+};
+
 // External API calls for live data
 export const fetchStockPrice = async (symbol) => {
   try {
@@ -256,11 +267,31 @@ export const fetchMarketIndices = async () => {
   }
 };
 
-// Utility function to format currency
-export const formatCurrency = (amount, currency = 'USD') => {
-  return new Intl.NumberFormat('en-US', {
+// Utility function to format currency (defaults to GBP)
+export const formatCurrency = (amount, currency = 'GBP') => {
+  return new Intl.NumberFormat('en-GB', {
     style: 'currency',
     currency: currency,
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 2,
+  }).format(amount);
+};
+
+// Utility function to format GBP currency specifically
+export const formatGBP = (amount) => {
+  return new Intl.NumberFormat('en-GB', {
+    style: 'currency',
+    currency: 'GBP',
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 2,
+  }).format(amount);
+};
+
+// Utility function to format USD currency
+export const formatUSD = (amount) => {
+  return new Intl.NumberFormat('en-US', {
+    style: 'currency',
+    currency: 'USD',
     minimumFractionDigits: 0,
     maximumFractionDigits: 2,
   }).format(amount);

@@ -5,7 +5,7 @@ const axios = require('axios');
 // Yahoo Finance API base URL
 const YAHOO_FINANCE_BASE = 'https://query1.finance.yahoo.com/v8/finance';
 
-// Get live stock price
+// Get live stock price with GBP conversion
 router.get('/stock-price/:symbol', async (req, res) => {
   try {
     const { symbol } = req.params;
@@ -26,17 +26,35 @@ router.get('/stock-price/:symbol', async (req, res) => {
       const quote = result.indicators.quote[0];
       const meta = result.meta;
       
-      const currentPrice = meta.regularMarketPrice;
-      const previousClose = meta.previousClose;
-      const change = currentPrice - previousClose;
-      const changePercent = (change / previousClose) * 100;
+      const currentPriceUSD = meta.regularMarketPrice;
+      const previousCloseUSD = meta.previousClose;
+      const changeUSD = currentPriceUSD - previousCloseUSD;
+      const changePercent = (changeUSD / previousCloseUSD) * 100;
+      
+      // Get USD to GBP exchange rate
+      let usdToGbp = 0.79; // Default fallback rate
+      try {
+        const exchangeResponse = await axios.get('https://api.exchangerate-api.com/v4/latest/USD');
+        usdToGbp = exchangeResponse.data.rates.GBP || 0.79;
+      } catch (exchangeError) {
+        console.warn('Using fallback exchange rate:', usdToGbp);
+      }
+      
+      // Convert to GBP
+      const currentPriceGBP = currentPriceUSD * usdToGbp;
+      const previousCloseGBP = previousCloseUSD * usdToGbp;
+      const changeGBP = changeUSD * usdToGbp;
       
       res.json({
         symbol: symbol.toUpperCase(),
-        currentPrice,
-        previousClose,
-        change,
+        currentPrice: currentPriceGBP,
+        currentPriceUSD,
+        previousClose: previousCloseGBP,
+        previousCloseUSD,
+        change: changeGBP,
+        changeUSD,
         changePercent,
+        usdToGbp,
         timestamp: new Date().toISOString()
       });
     } else {
@@ -48,7 +66,7 @@ router.get('/stock-price/:symbol', async (req, res) => {
   }
 });
 
-// Get multiple stock prices
+// Get multiple stock prices with GBP conversion
 router.post('/stock-prices', async (req, res) => {
   try {
     const { symbols } = req.body;
@@ -61,6 +79,15 @@ router.post('/stock-prices', async (req, res) => {
     
     // Fetch prices for multiple symbols (limited to avoid rate limiting)
     const limitedSymbols = symbols.slice(0, 10);
+    
+    // Get USD to GBP exchange rate once for all symbols
+    let usdToGbp = 0.79; // Default fallback rate
+    try {
+      const exchangeResponse = await axios.get('https://api.exchangerate-api.com/v4/latest/USD');
+      usdToGbp = exchangeResponse.data.rates.GBP || 0.79;
+    } catch (exchangeError) {
+      console.warn('Using fallback exchange rate:', usdToGbp);
+    }
     
     for (const symbol of limitedSymbols) {
       try {
@@ -78,12 +105,26 @@ router.post('/stock-prices', async (req, res) => {
           const result = response.data.chart.result[0];
           const meta = result.meta;
           
+          const currentPriceUSD = meta.regularMarketPrice;
+          const previousCloseUSD = meta.previousClose;
+          const changeUSD = currentPriceUSD - previousCloseUSD;
+          const changePercent = ((currentPriceUSD - previousCloseUSD) / previousCloseUSD) * 100;
+          
+          // Convert to GBP
+          const currentPriceGBP = currentPriceUSD * usdToGbp;
+          const previousCloseGBP = previousCloseUSD * usdToGbp;
+          const changeGBP = changeUSD * usdToGbp;
+          
           stockData.push({
             symbol: symbol.toUpperCase(),
-            currentPrice: meta.regularMarketPrice,
-            previousClose: meta.previousClose,
-            change: meta.regularMarketPrice - meta.previousClose,
-            changePercent: ((meta.regularMarketPrice - meta.previousClose) / meta.previousClose) * 100,
+            currentPrice: currentPriceGBP,
+            currentPriceUSD,
+            previousClose: previousCloseGBP,
+            previousCloseUSD,
+            change: changeGBP,
+            changeUSD,
+            changePercent,
+            usdToGbp,
             timestamp: new Date().toISOString()
           });
         }
@@ -100,7 +141,7 @@ router.post('/stock-prices', async (req, res) => {
       }
     }
     
-    res.json({ stockData });
+    res.json({ stockData, usdToGbp });
   } catch (error) {
     console.error('Error fetching stock prices:', error.message);
     res.status(500).json({ error: 'Failed to fetch stock prices' });
@@ -148,12 +189,21 @@ router.get('/crypto-prices', async (req, res) => {
   }
 });
 
-// Get market indices (S&P 500, NASDAQ, etc.)
+// Get market indices (S&P 500, NASDAQ, etc.) with GBP conversion
 router.get('/market-indices', async (req, res) => {
   try {
     const indices = ['^GSPC', '^IXIC', '^DJI']; // S&P 500, NASDAQ, Dow Jones
     
     const indicesData = [];
+    
+    // Get USD to GBP exchange rate once for all indices
+    let usdToGbp = 0.79; // Default fallback rate
+    try {
+      const exchangeResponse = await axios.get('https://api.exchangerate-api.com/v4/latest/USD');
+      usdToGbp = exchangeResponse.data.rates.GBP || 0.79;
+    } catch (exchangeError) {
+      console.warn('Using fallback exchange rate:', usdToGbp);
+    }
     
     for (const index of indices) {
       try {
@@ -177,12 +227,24 @@ router.get('/market-indices', async (req, res) => {
             '^DJI': 'Dow Jones'
           }[index] || index;
           
+          const currentValueUSD = meta.regularMarketPrice;
+          const previousCloseUSD = meta.previousClose;
+          const changeUSD = currentValueUSD - previousCloseUSD;
+          const changePercent = ((currentValueUSD - previousCloseUSD) / previousCloseUSD) * 100;
+          
+          // Convert to GBP
+          const currentValueGBP = currentValueUSD * usdToGbp;
+          const changeGBP = changeUSD * usdToGbp;
+          
           indicesData.push({
             name: indexName,
             symbol: index,
-            currentValue: meta.regularMarketPrice,
-            change: meta.regularMarketPrice - meta.previousClose,
-            changePercent: ((meta.regularMarketPrice - meta.previousClose) / meta.previousClose) * 100
+            currentValue: currentValueGBP,
+            currentValueUSD,
+            change: changeGBP,
+            changeUSD,
+            changePercent,
+            usdToGbp
           });
         }
         
@@ -193,7 +255,7 @@ router.get('/market-indices', async (req, res) => {
       }
     }
     
-    res.json({ indicesData });
+    res.json({ indicesData, usdToGbp });
   } catch (error) {
     console.error('Error fetching market indices:', error.message);
     res.status(500).json({ error: 'Failed to fetch market indices' });
