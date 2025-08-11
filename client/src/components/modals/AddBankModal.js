@@ -4,7 +4,7 @@ import { FiX, FiDollarSign } from 'react-icons/fi';
 import toast from 'react-hot-toast';
 
 // Services
-import { addBankAccount, updateBankAccount } from '../../services/financeService';
+import { addBankAccount, updateBankAccount } from '../../services/localStorageService';
 
 const AddBankModal = ({ isOpen, onClose, onSuccess, editData = null }) => {
   const [formData, setFormData] = useState({

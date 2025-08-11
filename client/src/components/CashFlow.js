@@ -6,7 +6,7 @@ import toast from 'react-hot-toast';
 import moment from 'moment';
 
 // Services
-import { getCashFlow, addExpense, updateExpense, deleteExpense, formatGBP } from '../services/financeService';
+import { getCashFlow, addExpense, updateExpense, deleteExpense, formatGBP } from '../services/localStorageService';
 
 // Modals
 import AddExpenseModal from './modals/AddExpenseModal';

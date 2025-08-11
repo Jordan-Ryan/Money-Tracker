@@ -4,7 +4,7 @@ import { FiX, FiTrendingUp } from 'react-icons/fi';
 import toast from 'react-hot-toast';
 
 // Services
-import { addInvestment, updateInvestment } from '../../services/financeService';
+import { addInvestment, updateInvestment } from '../../services/localStorageService';
 
 const AddInvestmentModal = ({ isOpen, onClose, onSuccess, editData = null }) => {
   const [formData, setFormData] = useState({

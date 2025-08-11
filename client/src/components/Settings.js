@@ -4,7 +4,7 @@ import { FiDownload, FiUpload, FiRefreshCw, FiSettings, FiDatabase, FiShield, Fi
 import toast from 'react-hot-toast';
 
 // Services
-import { exportExcel, importExcel } from '../services/financeService';
+import { exportExcel, importExcel } from '../services/localStorageService';
 
 const Settings = ({ onDataUpdate }) => {
   const [importLoading, setImportLoading] = useState(false);

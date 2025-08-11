@@ -11,7 +11,7 @@ import AddDebtModal from './modals/AddDebtModal';
 import AddExpenseModal from './modals/AddExpenseModal';
 
 // Services
-import { formatGBP, exportExcel, importExcel, updateInvestmentPrices } from '../services/financeService';
+import { formatGBP, exportExcel, importExcel, updateInvestmentPrices } from '../services/localStorageService';
 
 const Dashboard = ({ data, onDataUpdate }) => {
   const [showBankModal, setShowBankModal] = useState(false);

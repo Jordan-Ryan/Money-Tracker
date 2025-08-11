@@ -4,7 +4,7 @@ import { FiX, FiCreditCard } from 'react-icons/fi';
 import toast from 'react-hot-toast';
 
 // Services
-import { addDebt, updateDebt } from '../../services/financeService';
+import { addDebt, updateDebt } from '../../services/localStorageService';
 
 const AddDebtModal = ({ isOpen, onClose, onSuccess, editData = null }) => {
   const [formData, setFormData] = useState({

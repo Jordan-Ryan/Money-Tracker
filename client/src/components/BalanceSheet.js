@@ -4,7 +4,7 @@ import { FiPlus, FiEdit2, FiTrash2, FiTrendingUp, FiTrendingDown } from 'react-i
 import toast from 'react-hot-toast';
 
 // Services
-import { getBalanceSheet, deleteBank, deleteInvestment, deleteDebt, formatGBP, updateInvestmentPrices } from '../services/financeService';
+import { getBalanceSheet, deleteBank, deleteInvestment, deleteDebt, formatGBP, updateInvestmentPrices } from '../services/localStorageService';
 
 // Modals
 import AddBankModal from './modals/AddBankModal';

@@ -11,7 +11,7 @@ import CashFlow from './components/CashFlow';
 import Settings from './components/Settings';
 
 // Services
-import { getDashboard } from './services/financeService';
+import { getDashboard } from './services/localStorageService';
 
 function App() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
